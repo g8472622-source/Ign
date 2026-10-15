@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Practice App</title>
+    <style>
+        * { box-sizing: border-box; font-family: sans-serif; margin: 0; padding: 0; }
+        body { background: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
+        .container { background: white; padding: 20px; border-radius: 12px; width: 100%; max-width: 650px; text-align: center; }
+        .menu { display: flex; flex-direction: column; gap: 12px; }
+        .menu-btn { background: #3498db; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .menu-btn.train { background: #9b59b6; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .header-actions { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .back-btn, .reset-btn, .action-btn { background: #7f8c8d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+        .reset-btn { background: #e67e22; }
+        .action-btn { background: #2ecc71; font-weight: bold; }
+        .sub-menu { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .sub-screen { display: none; }
+        .sub-screen.active { display: block; }
+        .exercise-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+        input[type="text"] { padding: 8px; font-size: 14px; border: 2px solid #bdc3c7; border-radius: 6px; text-align: center; outline: none; }
+        .input-small { width: 65px; }
+        .input-medium { width: 95px; }
+        .input-large { width: 220px; }
+        input.correct { border-color: #2ecc71 !important; background: #e8f8f5 !important; color: #27ae60 !important; }
+        input.incorrect { border-color: #e74c3c !important; background: #fadbd8 !important; color: #c0392b !important; }
+        .tabuada-section { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 10px; margin-bottom: 15px; }
+        .tabuada-title { font-size: 16px; color: #2c3e50; margin-bottom: 10px; border-bottom: 2px solid #3498db; padding-bottom: 4px; }
+        .tabuada-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .tabuada-item { display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 6px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .number-box { display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; color: #27ae60; background: #e8f8f5; border: 2px solid #2ecc71; border-radius: 6px; animation: popIn 0.3s ease-out; }
+        .number-box-small { width: 65px; height: 35px; }
+        .number-box-medium { width: 95px; height: 35px; }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .challenge-box { background: #f8f9fa; border: 2px dashed #3498db; padding: 20px; border-radius: 10px; margin-top: 15px; }
+        .challenge-display { font-size: 26px; font-weight: bold; color: #2c3e50; margin-bottom: 15px; }
+        .stat-badge { font-size: 12px; background: #e74c3c; color: white; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-bottom: 10px; }
+        @media (max-width: 500px) { .tabuada-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="main-menu" class="menu">
+        <h1>English Learning App</h1>
+        <button class="menu-btn" onclick="showScreen('screen-numbers')">1. Numbers (Estudo)</button>
+        <button class="menu-btn" onclick="showScreen('screen-time')">2. Time (Estudo)</button>
+        <button class="menu-btn" onclick="showScreen('screen-tabuada')">3. Multiplication Table (Estudo)</button>
+        <button class="menu-btn train" onclick="showScreen('screen-train')">4. Treino Inteligente 🚀</button>
+    </div>
+
+    <div id="screen-numbers" class="screen">
+        <div class="header-actions"><button class="back-btn" onclick="showMenu()">← Voltar</button></div>
+        <h2>Numbers</h2>
+        <div id="numbers-container"></div>
+    </div>
+
+    <div id="screen-time" class="screen">
+        <div class="header-actions"><button class="back-btn" onclick="showMenu()">← Voltar</button></div>
+        <h2>Time</h2>
+        <div id="time-container"></div>
+    </div>
+
+    <div id="screen-tabuada" class="screen">
+        <div class="header-actions">
+            <button class="back-btn" onclick="showMenu()">← Voltar</button>
+            <button class="reset-btn" onclick="renderTabuada()">🔄 Reiniciar</button>
+        </div>
+        <h2>Multiplication Table</h2>
+        <div id="tabuada-container"></div>
+    </div>
+
+    <div id="screen-train" class="screen">
+        <div class="header-actions"><button class="back-btn" onclick="showMenu()">← Voltar</button></div>
+        <h2>Área de Treino Inteligente</h2>
+        <div class="sub-menu">
+            <button class="action-btn" onclick="switchTrainTab('numbers')">Números</button>
+            <button class="action-btn" onclick="switchTrainTab('time')">Horários</button>
+            <button class="action-btn" onclick="switchTrainTab('tabuada')" style="background: #9b59b6;">Tabuada</button>
+        </div>
+
+        <div id="train-numbers-tab" class="sub-screen">
+            <div class="challenge-box">
+                <div id="num-error-badge" class="stat-badge" style="display:none;"></div>
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Escreva por extenso:</div>
+                <div id="rand-num-display" class="challenge-display">0</div>
+                <div class="exercise-row">
+                    <input type="text" id="rand-num-input" class="input-large" placeholder="Ex: one hundred..." oninput="checkRandNumber()">
+                </div>
+                <div id="rand-num-feedback" style="font-weight: bold; margin-top: 10px; min-height: 20px;"></div>
+                <button class="action-btn" style="margin-top: 15px;" onclick="nextRandomNumber()">Próximo Número ➔</button>
+            </div>
+        </div>
+
+        <div id="train-time-tab" class="sub-screen">
+            <div class="challenge-box">
+                <div id="time-error-badge" class="stat-badge" style="display:none;"></div>
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Escreva o horário em inglês:</div>
+                <div id="rand-time-display" class="challenge-display">00:00</div>
+                <div class="exercise-row">
+                    <input type="text" id="rand-time-input" class="input-large" placeholder="Ex: one twenty two..." oninput="checkRandTime()">
+                </div>
+                <div id="rand-time-feedback" style="font-weight: bold; margin-top: 10px; min-height: 20px;"></div>
+                <button class="action-btn" style="margin-top: 15px;" onclick="nextRandomTime()">Próximo Horário ➔</button>
+            </div>
+        </div>
+
+        <div id="train-tabuada-tab" class="sub-screen">
+            <div class="challenge-box">
+                <div id="tab-error-badge" class="stat-badge" style="display:none;"></div>
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">Resolva a multiplicação em inglês:</div>
+                <div id="rand-tab-display" class="challenge-display">2 x 2 = ?</div>
+                <div id="rand-tab-input-wrapper" class="exercise-row" style="gap: 8px;">
+                    <input type="text" id="rand-tab-input" class="input-medium" placeholder="Resultado..." oninput="checkRandTabuada()">
+                </div>
+                <div id="rand-tab-feedback" style="font-weight: bold; margin-top: 10px; min-height: 20px;"></div>
+                <button class="action-btn" style="margin-top: 15px;" onclick="nextRandomTabuada()">Próxima Conta ➔</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showScreen(id) {
+        document.getElementById('main-menu').style.display = 'none';
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'screen-train') switchTrainTab('numbers');
+    }
+
+    function showMenu() {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('main-menu').style.display = 'flex';
+    }
+
+    function switchTrainTab(tab) {
+        document.querySelectorAll('.sub-screen').forEach(s => s.classList.remove('active'));
+        if(tab === 'numbers') {
+            document.getElementById('train-numbers-tab').classList.add('active');
+            nextRandomNumber();
+        } else if(tab === 'time') {
+            document.getElementById('train-time-tab').classList.add('active');
+            nextRandomTime();
+        } else {
+            document.getElementById('train-tabuada-tab').classList.add('active');
+            nextRandomTabuada();
+        }
+    }
+
+    function sanitize(text) {
+        return text.toLowerCase().trim().replace(/[-']/g, ' ');
+    }
+
+    function validateInput(input, expected) {
+        const val = sanitize(input.value);
+        if (!val) { input.classList.remove('correct', 'incorrect'); return false; }
+        const ok = Array.isArray(expected) ? expected.some(e => sanitize(e) === val) : sanitize(expected) === val;
+        input.classList.toggle('correct', ok);
+        input.classList.toggle('incorrect', !ok);
+        return ok;
+    }
+
+    function validateAndTransform(input, expected, num, boxClass) {
+        if (validateInput(input, expected)) {
+            setTimeout(() => {
+                const box = document.createElement('div');
+                box.className = 'number-box ' + boxClass;
+                box.textContent = num;
+                input.replaceWith(box);
+            }, 200);
+        }
+    }
+
+    const numToText = {
+        1: "one", 2: "two", 3: "three", 4: "four", 5: "five",
+        6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+        11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
+        16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty",
+        21: "twenty-one", 22: "twenty-two", 23: "twenty-three", 24: "twenty-four", 25: "twenty-five",
+        26: "twenty-six", 27: "twenty-seven", 28: "twenty-eight", 29: "twenty-nine",
+        30: "thirty", 40: "forty", 50: "fifty", 60: "sixty", 70: "seventy", 80: "eighty", 90: "ninety", 100: "one hundred"
+    };
+
+    function numberToEnglishWords(n) {
+        const units = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+        const teens = ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+        const tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+        if (n === 1000) return ["one thousand"];
+
+        let rem = n;
+        let str = "";
+
+        if (rem >= 100) {
+            let h = Math.floor(rem / 100);
+            str += units[h] + " hundred";
+            rem %= 100;
+            if (rem > 0) str += " ";
+        }
+
+        if (rem >= 20) {
+            let t = Math.floor(rem / 10);
+            str += tens[t];
+            rem %= 10;
+            if (rem > 0) str += "-" + units[rem];
+        } else if (rem >= 10) {
+            str += teens[rem - 10];
+        } else if (rem > 0) {
+            str += units[rem];
+        }
+
+        return [str, str.replace(/-/g, ' '), str.replace("hundred ", "hundred and ")];
+    }
+
+    let errorScores = JSON.parse(localStorage.getItem('english_app_errors') || '{}');
+
+    function recordError(key) {
+        errorScores[key] = (errorScores[key] || 0) + 1;
+        localStorage.setItem('english_app_errors', JSON.stringify(errorScores));
+    }
+
+    function recordSuccess(key) {
+        if (errorScores[key] && errorScores[key] > 0) {
+            errorScores[key] -= 1;
+            localStorage.setItem('english_app_errors', JSON.stringify(errorScores));
+        }
+    }
+
+    // --- TREINO INTELIGENTE DE NÚMEROS ---
+    let currentRandomNum = 1;
+    let numHasErrored = false;
+
+    function nextRandomNumber() {
+        numHasErrored = false;
+        let pool = [];
+        for(let i=1; i<=1000; i++) {
+            let weight = 1 + (errorScores['num_' + i] || 0) * 3;
+            for(let w=0; w<weight; w++) pool.push(i);
+        }
+        currentRandomNum = pool[Math.floor(Math.random() * pool.length)];
+        document.getElementById('rand-num-display').textContent = currentRandomNum;
+        
+        let errs = errorScores['num_' + currentRandomNum] || 0;
+        let badge = document.getElementById('num-error-badge');
+        if(errs > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = `⚠️ Erros anteriores: ${errs}`;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const input = document.getElementById('rand-num-input');
+        input.value = '';
+        input.className = 'input-large';
+        document.getElementById('rand-num-feedback').textContent = '';
+        input.focus();
+    }
+
+    function checkRandNumber() {
+        const input = document.getElementById('rand-num-input');
+        const ok = validateInput(input, numberToEnglishWords(currentRandomNum));
+        const feedback = document.getElementById('rand-num-feedback');
+        if (ok) { 
+            feedback.style.color = "#27ae60"; 
+            feedback.textContent = "Correto! 🎉"; 
+            recordSuccess('num_' + currentRandomNum);
+        } else {
+            if(!numHasErrored && input.value.length > 2) {
+                numHasErrored = true;
+                recordError('num_' + currentRandomNum);
+            }
+        }
+    }
+
+    // --- TREINO INTELIGENTE DE HORÁRIOS ---
+    let currentRandomHour = 0;
+    let currentRandomMin = 0;
+    let timeHasErrored = false;
+
+    function timeToEnglishWords(h, m) {
+        let answers = [];
+        let h12 = h % 12 === 0 ? 12 : h % 12;
+        if (h === 0 && m === 0) return ["midnight", "twelve am"];
+        if (h === 12 && m === 0) return ["noon", "midday", "twelve pm"];
+        let hStr = numToText[h12] || String(h12);
+
+        if (m === 0) {
+            answers.push(hStr + " oclock", hStr + " o'clock");
+        } else if (m < 10) {
+            let mText = numToText[m] || String(m);
+            answers.push(`${hStr} oh ${mText}`);
+        } else {
+            let mWordsList = numberToEnglishWords(m);
+            mWordsList.forEach(mStr => {
+                answers.push(`${hStr} ${mStr}`);
+                if (m <= 30) answers.push(`${mStr} past ${hStr}`);
+            });
+        }
+        return answers;
+    }
+
+    function nextRandomTime() {
+        timeHasErrored = false;
+        let hours = [];
+        for(let h=0; h<24; h++) {
+            for(let m=0; m<60; m++) {
+                let key = `time_${h}_${m}`;
+                let weight = 1 + (errorScores[key] || 0) * 4;
+                for(let w=0; w<weight; w++) hours.push({h, m});
+            }
+        }
+        let chosen = hours[Math.floor(Math.random() * hours.length)];
+        currentRandomHour = chosen.h;
+        currentRandomMin = chosen.m;
+
+        let hDisplay = String(currentRandomHour).padStart(2, '0');
+        let mDisplay = String(currentRandomMin).padStart(2, '0');
+        let timeKey = `time_${currentRandomHour}_${currentRandomMin}`;
+
+        document.getElementById('rand-time-display').textContent = `${hDisplay}:${mDisplay}`;
+        let errs = errorScores[timeKey] || 0;
+        let badge = document.getElementById('time-error-badge');
+        if(errs > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = `⚠️ Erros anteriores: ${errs}`;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const input = document.getElementById('rand-time-input');
+        input.value = '';
+        input.className = 'input-large';
+        document.getElementById('rand-time-feedback').textContent = '';
+        input.focus();
+    }
+
+    function checkRandTime() {
+        const input = document.getElementById('rand-time-input');
+        const ok = validateInput(input, timeToEnglishWords(currentRandomHour, currentRandomMin));
+        const feedback = document.getElementById('rand-time-feedback');
+        let timeKey = `time_${currentRandomHour}_${currentRandomMin}`;
+
+        if (ok) { 
+            feedback.style.color = "#27ae60"; 
+            feedback.textContent = "Correto! 🎉"; 
+            recordSuccess(timeKey);
+        } else {
+            if(!timeHasErrored && input.value.length > 2) {
+                timeHasErrored = true;
+                recordError(timeKey);
+            }
+        }
+    }
+
+    // --- TREINO INTELIGENTE DE TABUADA (Começa a partir do 2) ---
+    let currentTabI = 2;
+    let currentTabJ = 2;
+    let tabHasErrored = false;
+
+    function nextRandomTabuada() {
+        tabHasErrored = false;
+        let pool = [];
+        for(let i=2; i<=10; i++) {
+            for(let j=1; j<=10; j++) {
+                let key = `tab_${i}_${j}`;
+                let weight = 1 + (errorScores[key] || 0) * 4;
+                for(let w=0; w<weight; w++) pool.push({i, j});
+            }
+        }
+        let chosen = pool[Math.floor(Math.random() * pool.length)];
+        currentTabI = chosen.i;
+        currentTabJ = chosen.j;
+
+        document.getElementById('rand-tab-display').textContent = `${currentTabI} x ${currentTabJ} = ?`;
+        let tabKey = `tab_${currentTabI}_${currentTabJ}`;
+        let errs = errorScores[tabKey] || 0;
+        let badge = document.getElementById('tab-error-badge');
+        if(errs > 0) {
+            badge.style.display = 'inline-block';
+            badge.textContent = `⚠️ Erros anteriores: ${errs}`;
+        } else {
+            badge.style.display = 'none';
+        }
+
+        const wrapper = document.getElementById('rand-tab-input-wrapper');
+        wrapper.innerHTML = `<input type="text" id="rand-tab-input" class="input-medium" placeholder="Resultado..." oninput="checkRandTabuada()">`;
+        document.getElementById('rand-tab-feedback').textContent = '';
+        document.getElementById('rand-tab-input').focus();
+    }
+
+    function checkRandTabuada() {
+        const input = document.getElementById('rand-tab-input');
+        if(!input) return;
+        const resNum = currentTabI * currentTabJ;
+        const expected = numberToEnglishWords(resNum);
+        let tabKey = `tab_${currentTabI}_${currentTabJ}`;
+
+        const ok = validateInput(input, expected);
+        const feedback = document.getElementById('rand-tab-feedback');
+
+        if (ok) {
+            feedback.style.color = "#27ae60";
+            feedback.textContent = "Correto! 🎉";
+            recordSuccess(tabKey);
+            setTimeout(() => {
+                const box = document.createElement('div');
+                box.className = 'number-box number-box-medium';
+                box.textContent = resNum;
+                input.replaceWith(box);
+            }, 250);
+        } else {
+            if(!tabHasErrored && input.value.length > 1) {
+                tabHasErrored = true;
+                recordError(tabKey);
+            }
+        }
+    }
+
+    // Inicialização Estudo Números
+    const numContainer = document.getElementById('numbers-container');
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(n => {
+        const row = document.createElement('div');
+        row.className = 'exercise-row';
+        row.innerHTML = `<span style="width:40px; text-align:right;">${n} =</span>`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'input-large';
+        input.oninput = () => validateInput(input, numToText[n] || numberToEnglishWords(n));
+        row.appendChild(input);
+        numContainer.appendChild(row);
+    });
+
+    // Inicialização Estudo Horários
+    const timeContainer = document.getElementById('time-container');
+    [
+        { t: "00:00", a: ["midnight", "twelve am"] },
+        { t: "00:01", a: ["twelve oh one"] },
+        { t: "12:00", a: ["noon", "midday", "twelve pm"] },
+        { t: "12:01", a: ["twelve oh one"] },
+        { t: "12:09", a: ["twelve oh nine"] },
+        { t: "13:00", a: ["one oclock", "one o'clock", "one pm"] },
+        { t: "13:01", a: ["one oh one"] },
+        { t: "13:09", a: ["one oh nine"] },
+        { t: "23:01", a: ["eleven oh one"] }
+    ].forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'exercise-row';
+        row.innerHTML = `<span style="width:60px; text-align:right;">${item.t} =</span>`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'input-large';
+        input.oninput = () => validateInput(input, item.a);
+        row.appendChild(input);
+        timeContainer.appendChild(row);
+    });
+
+    // Inicialização Estudo Tabuada (Começa a partir do 2)
+    function renderTabuada() {
+        const tabContainer = document.getElementById('tabuada-container');
+        tabContainer.innerHTML = '';
+        for (let i = 2; i <= 10; i++) {
+            const sec = document.createElement('div');
+            sec.className = 'tabuada-section';
+            sec.innerHTML = `<div class="tabuada-title">Tabuada do ${i}</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'tabuada-grid';
+
+            for (let j = 1; j <= 10; j++) {
+                const res = i * j;
+                const item = document.createElement('div');
+                item.className = 'tabuada-item';
+
+                const i1 = document.createElement('input');
+                i1.type = 'text';
+                i1.className = 'input-small';
+                i1.oninput = function() { validateAndTransform(this, numToText[i], i, 'number-box-small'); };
+
+                const i2 = document.createElement('input');
+                i2.type = 'text';
+                i2.className = 'input-small';
+                i2.oninput = function() { validateAndTransform(this, numToText[j], j, 'number-box-small'); };
+
+                const i3 = document.createElement('input');
+                i3.type = 'text';
+                i3.className = 'input-medium';
+                i3.oninput = function() { validateAndTransform(this, numberToEnglishWords(res), res, 'number-box-medium'); };
+
+                item.append(i1, document.createTextNode('x'), i2, document.createTextNode('='), i3);
+                grid.appendChild(item);
+            }
+            sec.appendChild(grid);
+            tabContainer.appendChild(sec);
+        }
+    }
+    renderTabuada();
+</script>
+
+</body>
+</html>
